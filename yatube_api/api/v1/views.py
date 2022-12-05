@@ -1,8 +1,8 @@
-from api.permissions import IsAuthorOrReadOnly
-from api.serializers import (CommentSerializer, FollowSerializer,
-                             GroupSerializer, PostSerializer)
+from .permissions import IsAuthorOrReadOnly
+from .serializers import (CommentSerializer, FollowSerializer,
+                          GroupSerializer, PostSerializer)
 from django.shortcuts import get_object_or_404
-from posts.models import Comment, Follow, Group, Post
+from posts.models import Group, Post, Comment, Follow
 from rest_framework import filters, mixins, viewsets
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
@@ -47,8 +47,9 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Получаем список комментариев к определенному посту."""
-        post_id = self.kwargs.get("post_id")
-        new_queryset = Comment.objects.filter(post=post_id)
+        post_id = get_object_or_404(Post, pk=self.kwargs['post_id'])
+        new_queryset = Comment.objects.select_related(
+            'author', 'post').filter(post=post_id)
         return new_queryset
 
     def perform_create(self, serializer):
